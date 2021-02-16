@@ -58,18 +58,11 @@ def minEdist(source, target, threshold, DIST, startoffset):
     #print(DIST[m][n])
     #print()
 
-def minimalwords(source, wordlist):
+def minimalwords(source, wordlist, DIST):
 
     MAXLENGTH = 40
 
     minDist = MAXLENGTH
-
-    ## Init D matrix
-    DIST = [[99 for i in range(MAXLENGTH+1)] for j in range(MAXLENGTH+1)]
-
-    for i in range(MAXLENGTH+1):
-        DIST[i][0] = i
-        DIST[0][i] = i
 
     oldtarget = ""
 
@@ -97,6 +90,15 @@ def minimalwords(source, wordlist):
 
 def main():
 
+    MAXLENGTH = 40
+
+    ## Init D matrix
+    DIST = [[99 for i in range(MAXLENGTH+1)] for j in range(MAXLENGTH+1)]
+
+    for i in range(MAXLENGTH+1):
+        DIST[i][0] = i
+        DIST[0][i] = i
+
     wordlist = list()
     correctionlist = list()
 
@@ -109,7 +111,7 @@ def main():
     correctionlist = [x.strip("\n") for x in sys.stdin]
 
     for Fword in correctionlist:
-        print(minimalwords(Fword, wordlist))
+        print(minimalwords(Fword, wordlist, DIST))
 
 main()
 
