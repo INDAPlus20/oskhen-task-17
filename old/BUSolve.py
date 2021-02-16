@@ -61,8 +61,8 @@ def main():
 
 #main()
 
-#print(minEdist("aske", "maska"))
+print(minEdist("aske", "masken"))
 #print(minEdist("NOITNETNI", "EXECUTION"))
 #print(minEdist("mskt", "maskot"))
-minEdist("AVERY", "GARVEY")
+#minEdist("AVERY", "GARVEY")
 
