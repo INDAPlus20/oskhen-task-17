@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
-#import numpy as np #Testing
+import numpy as np #Testing
 import itertools
 import math
 
-def minEdist(source, target, MEMO):
+def minEdist(source, target):
 
     #print(source, target)
 
@@ -43,7 +43,7 @@ def minEdist(source, target, MEMO):
             if DIST[i][j] != 99:
                 continue
 
-            #print(np.matrix(DIST))
+            print(np.matrix(DIST))
 
             if source[i-1] == target[j-1]:
                 replace_cost = 0
@@ -55,7 +55,7 @@ def minEdist(source, target, MEMO):
             DIST[i][j] = min(len_changing_ops, DIST[i-1][j-1] + replace_cost)
 
             if i == n and j == m:
-                #print(np.matrix(DIST))
+                print(np.matrix(DIST))
                 return DIST[i][j]
     
     
@@ -84,23 +84,8 @@ def main():
                 words.append(Cword)
         print(f"{Fword} ({mindist}) {' '.join(words)}")
 
-main()
+#main()
 
-#print(minEdist("aske", "maska"))
-#print(minEdist("NOITNETNI", "EXECUTION"))
+print(minEdist("aske", "maska"))
+#print(minEdist("INTENTION", "EXECUTION"))
 #print(minEdist("mskt", "maskot"))
-
-
-# ## Bottom-up
-# for i in range(1, n+1):
-#     for j in range(1, m+1):
-#         len_changing_ops = min(DIST[i-1][j] + 1, DIST[i][j-1] + 1) #Compare add char to remove char
-#         if source[i-1] == target[j-1]:
-#             replace_cost = 0
-#         else:
-#             replace_cost = 1
-#         DIST[i][j] = min(len_changing_ops, DIST[i-1][j-1] + replace_cost)
-
-# print(np.matrix(DIST))
-# print()
-# return DIST[i][j]
