@@ -1,6 +1,7 @@
 use std::cmp;
 use std::io::prelude::*;
 use std::convert;
+use std::time::{Duration, SystemTime};
 
 #[allow(dead_code)]
 
@@ -8,6 +9,8 @@ const MAXLENGTH: usize = 40;
 
 fn main() {
 
+    // let nowTotal = SystemTime::now();
+    
     // Take input
 
     let mut buffer = String::new();
@@ -22,6 +25,8 @@ fn main() {
         }
         wordlist.push(line.trim());
     }
+
+    // println!("I/O + alloc: {:?}", nowTotal.elapsed().unwrap());
 
     // Initialize matrix
 
@@ -46,6 +51,8 @@ fn main() {
         minimalWords(line.trim(), &wordlist, &mut Dmatrix);
 
     }
+
+    // println!("{:?}", nowTotal.elapsed().unwrap());
 
 }
 
