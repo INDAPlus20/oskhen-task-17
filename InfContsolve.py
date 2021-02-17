@@ -33,16 +33,14 @@ def minEdist(source, target, threshold, DIST, startoffset):
         if n >= m:
             for j in range( max(1+startoffset, i-p) , min(n+1, n-m+p+i)): # Start where j-i >= -p and end where j <= n-m+p
 
-                replace_cost = not(source[i-1] == target[j-1])
-
+                replace_cost = source[i-1] != target[j-1]
                 DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
         else:
 
             for j in range( max(1+startoffset, n-m-p+i) , min(n+1, p+i)):
             
-                replace_cost = not(source[i-1] == target[j-1])
-
+                replace_cost = source[i-1] != target[j-1]
                 DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
     #print(np.matrix(DIST)[0:m+1, 0:n+1])
@@ -101,19 +99,25 @@ def main():
     for x in sys.stdin:
         if x[0] == "#":
             break
-        wordlist[wordptr] = x.strip("\n")
+        wordlist[wordptr] = x.strip("\n").strip("\r")
         wordptr += 1
 
     for x in sys.stdin:
-        correctionlist[correctionptr] = x.strip("\n")
+        correctionlist[correctionptr] = x.strip("\n").strip("\r")
         correctionptr += 1
 
     endalloc = time.time()
 
     print(f"alloc: {endalloc - startalloc}")
 
+    #print(correctionlist[0:correctionptr])
+
+    startminwords = time.time()
     for Fword in correctionlist[0:correctionptr]:
         print(minimalwords(Fword, wordlist[0:wordptr], DIST))
+    endminwords = time.time()
+
+    print(f"algo: {endminwords - startminwords}")
 
 startMAIN = time.time()
 main()
