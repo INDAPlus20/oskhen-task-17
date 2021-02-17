@@ -38,9 +38,7 @@ def minEdist(source, target, threshold, DIST, startoffset):
                 else:
                     replace_cost = 1
 
-                len_changing_ops = min(DIST[i-1][j] + 1, DIST[i][j-1] + 1) #Compare add char to remove char
-
-                DIST[i][j] = min(len_changing_ops, DIST[i-1][j-1] + replace_cost)
+                DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
         else:
 
@@ -51,9 +49,7 @@ def minEdist(source, target, threshold, DIST, startoffset):
                 else:
                     replace_cost = 1
 
-                len_changing_ops = min(DIST[i-1][j] + 1, DIST[i][j-1] + 1) #Compare add char to remove char
-
-                DIST[i][j] = min(len_changing_ops, DIST[i-1][j-1] + replace_cost)
+                DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
     #print(np.matrix(DIST)[0:m+1, 0:n+1])
     #print(DIST[m][n])
