@@ -99,19 +99,24 @@ def main():
         DIST[i][0] = i
         DIST[0][i] = i
 
-    wordlist = list()
-    correctionlist = list()
+    wordlist = [None] * 5000000
+    wordptr = 0
+    correctionlist = [None] * 100
+    correctionptr = 0
 
     while True:             #while (x := input()) and x != "#": doesn't work on kattis bcs it uses old py version >:(
         x = input()
         if x == "#":
             break
-        wordlist.append(x)
+        wordlist[wordptr] = x
+        wordptr += 1
 
-    correctionlist = [x.strip("\n") for x in sys.stdin]
+    for x in sys.stdin:
+        correctionlist[correctionptr] = x.strip("\n")
+        correctionptr += 1
 
-    for Fword in correctionlist:
-        print(minimalwords(Fword, wordlist, DIST))
+    for Fword in correctionlist[0:correctionptr]:
+        print(minimalwords(Fword, wordlist[0:wordptr], DIST))
 
 main()
 
