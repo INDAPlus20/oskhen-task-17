@@ -33,10 +33,7 @@ def minEdist(source, target, threshold, DIST, startoffset):
         if n >= m:
             for j in range( max(1+startoffset, i-p) , min(n+1, n-m+p+i)): # Start where j-i >= -p and end where j <= n-m+p
 
-                if source[i-1] == target[j-1]:
-                    replace_cost = 0
-                else:
-                    replace_cost = 1
+                int(not (source[i-1] == target[j-1]))
 
                 DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
@@ -44,10 +41,7 @@ def minEdist(source, target, threshold, DIST, startoffset):
 
             for j in range( max(1+startoffset, n-m-p+i) , min(n+1, p+i)):
             
-                if source[i-1] == target[j-1]:
-                    replace_cost = 0
-                else:
-                    replace_cost = 1
+                int(not (source[i-1] == target[j-1]))
 
                 DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
