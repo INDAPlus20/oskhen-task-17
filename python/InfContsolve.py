@@ -3,7 +3,7 @@
 # https://www.cs.helsinki.fi/u/ukkonen/InfCont85.PDF
 
 import sys
-#import numpy as np #Testing
+import numpy as np #Testing
 import math
 import time
 
@@ -43,9 +43,11 @@ def minEdist(source, target, threshold, DIST, startoffset):
                 replace_cost = source[i-1] != target[j-1]
                 DIST[i][j] = min( min(DIST[i-1][j] + 1, DIST[i][j-1] + 1)  , DIST[i-1][j-1] + replace_cost)
 
-    #print(np.matrix(DIST)[0:m+1, 0:n+1])
-    #print(DIST[m][n])
-    #print()
+    print()
+    print(source, target, threshold, p, i-p, n-m+p+i)
+    print(np.matrix(DIST)[0:m+1, 0:n+1])
+    print(DIST[m][n])
+    print()
 
 def minimalwords(source, wordlist, DIST):
 
@@ -108,7 +110,7 @@ def main():
 
     endalloc = time.time()
 
-    print(f"alloc: {endalloc - startalloc}")
+    #print(f"alloc: {endalloc - startalloc}")
 
     #print(correctionlist[0:correctionptr])
 
@@ -117,12 +119,18 @@ def main():
         print(minimalwords(Fword, wordlist[0:wordptr], DIST))
     endminwords = time.time()
 
-    print(f"algo: {endminwords - startminwords}")
+    #print(f"algo: {endminwords - startminwords}")
 
-startMAIN = time.time()
-main()
-endMAIN = time.time()
+#startMAIN = time.time()
+#main()
+#endMAIN = time.time()
 
-print(f"Main: {endMAIN - startMAIN}")
+#print(f"Main: {endMAIN - startMAIN}")
 
-#print(minimalwords("aske", ["maska", "masken", "masker", "maskin", "maskot"]))
+DIST = [[99 for i in range(40+1)] for j in range(40+1)]
+
+for i in range(40+1):
+    DIST[i][0] = i
+    DIST[0][i] = i
+
+print(minimalwords("aske", ["maska", "masken", "masker", "maskin", "maskot"], DIST))
