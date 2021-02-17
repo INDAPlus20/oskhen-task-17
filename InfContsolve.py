@@ -5,6 +5,7 @@
 import sys
 #import numpy as np #Testing
 import math
+import time
 
 def similarity(s1, s2):
 
@@ -90,6 +91,8 @@ def minimalwords(source, wordlist, DIST):
 
 def main():
 
+    startalloc = time.time()
+
     MAXLENGTH = 40
 
     ## Init D matrix
@@ -104,20 +107,28 @@ def main():
     correctionlist = [None] * 100
     correctionptr = 0
 
-    while True:             #while (x := input()) and x != "#": doesn't work on kattis bcs it uses old py version >:(
-        x = input()
-        if x == "#":
+
+    for x in sys.stdin:
+        if x[0] == "#":
             break
-        wordlist[wordptr] = x
+        wordlist[wordptr] = x.strip("\n")
         wordptr += 1
 
     for x in sys.stdin:
         correctionlist[correctionptr] = x.strip("\n")
         correctionptr += 1
 
+    endalloc = time.time()
+
+    print(f"alloc: {endalloc - startalloc}")
+
     for Fword in correctionlist[0:correctionptr]:
         print(minimalwords(Fword, wordlist[0:wordptr], DIST))
 
+startMAIN = time.time()
 main()
+endMAIN = time.time()
+
+print(f"Main: {endMAIN - startMAIN}")
 
 #print(minimalwords("aske", ["maska", "masken", "masker", "maskin", "maskot"]))
