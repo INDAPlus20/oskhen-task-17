@@ -104,10 +104,10 @@ fn minEdistance(source: &str, target: &str, threshold: usize, Dmatrix: &mut [[us
 
         if n >= m {
 
-            let mut raisedfloor = (i as isize - p);
+            let mut raisedfloor = i as isize - p;
             let loweredroof = ((n - m) as isize + p + i as isize) as usize;
 
-            if raisedfloor < 0 { // Avoid overflows
+            if raisedfloor < 0 { // Avoid underflows
                 raisedfloor = 0;
             }
 
@@ -122,7 +122,7 @@ fn minEdistance(source: &str, target: &str, threshold: usize, Dmatrix: &mut [[us
                 }
 
                 let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
-
+                
                 Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
 
             }
@@ -131,10 +131,15 @@ fn minEdistance(source: &str, target: &str, threshold: usize, Dmatrix: &mut [[us
 
         else {
 
-            let raisedfloor = (n as isize - m as isize - p + i as isize) as usize;
+            let mut raisedfloor = n as isize - m as isize - p + i as isize;
             let loweredroof = (i as isize + p) as usize;
 
-            for j in cmp::max(offset+1, raisedfloor)..cmp::min(n+1, loweredroof) {
+            if raisedfloor < 0 { // Avoid underflows
+                raisedfloor = 0;
+            }
+
+
+            for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
 
                 let replace_cost;
 
