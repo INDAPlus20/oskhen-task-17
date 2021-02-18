@@ -1,11 +1,82 @@
-use std::cmp;
+use std::{cmp, fmt::Display};
 use std::io::prelude::*;
 use std::convert;
 use std::time::{Duration, SystemTime};
+use std::process;
+use std::fmt;
+
+use cmp::min;
 
 #[allow(dead_code)]
+#[allow(non_camel_case_types)]
+#[allow(non_snake_case)]
 
 const MAXLENGTH: usize = 40;
+
+#[derive(Copy, Clone)]
+struct charVec {
+    array: [u8; 40],
+    len: usize
+}
+
+impl charVec {
+    pub fn new() -> Self {
+        Self {
+            array: [0; 40],
+            len: 0,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.len
+    }
+
+    pub fn push(&mut self, byte: u8) {
+        self.array[self.len] = byte;
+        self.len += 1;
+    }
+    pub fn clear(&mut self) {
+        self.len = 0;
+    }
+    pub fn similar(&self, other: &charVec) -> usize {
+        let minlen = min(self.len(), other.len());
+        for i in 0..minlen {
+            if self.array[i] != other.array[i] {
+                return i;
+            }
+        }
+        return minlen;
+    }
+}
+
+impl fmt::Display for charVec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+        for i in 0..self.len() {
+            let b = self.array[i];
+            match b {
+                0x7b => write!(f, "å"),
+                0x7c => write!(f, "ä"),
+                0x7d => write!(f, "ö"),
+                r => write!(f, "{}", r as char),
+                _ => continue
+            };
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Debug for charVec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+        for b in self.array.iter() {
+            write!(f, "{} ", b);
+        }
+
+        Ok(())
+    }
+
+}
 
 fn main() {
 
@@ -13,116 +84,156 @@ fn main() {
     
     // Take input
 
-    let mut buffer = String::new();
-    std::io::stdin().read_to_string(&mut buffer);
-    let mut lines = buffer.split("\n");
+    let mut wordList: Vec<charVec> = Vec::with_capacity(500_000);
 
-    let mut wordlist: Vec<&str> = Vec::new();
+    let mut input = String::new();
+    std::io::stdin().read_to_string(&mut input);
 
-    while let Some(line) = lines.next() {
-        if line.trim() == "#" {
-            break
+    // | --
+
+    // Convert and allocate as bytes
+
+    let mut bytes = input.bytes();
+
+    let mut wordBuffer = charVec::new();
+    
+    loop {
+        if let Some(byte) = bytes.next() {
+            match byte {
+                b'#' => {
+                    bytes.next();
+                    wordBuffer.clear();
+                    break;
+                },
+                b'\n' | b'\r' => {
+                    wordList.push(wordBuffer);
+                    wordBuffer.clear();
+                }
+                0xc3 => wordBuffer.push(
+                        match bytes.next() {
+                            Some(0xa5) => 0x7b, // å => {
+                            Some(0xa4) => 0x7c, // ä => |
+                            Some(0xb6) => 0x7d, // ö => }
+                            _ => panic!("non-allowed character!")
+                        }
+                ),
+                b => wordBuffer.push(b),
+            }
         }
-        wordlist.push(line.trim());
-    }
-
-    // println!("I/O + alloc: {:?}", nowTotal.elapsed().unwrap());
-
-    // Initialize matrix
-
-    let mut Dmatrix = [[99 as usize;MAXLENGTH+1];MAXLENGTH+1];
-
-    for i in 0..MAXLENGTH+1 {
-        Dmatrix[i][0] = i;
-        Dmatrix[0][i] = i;
-    }
-
-    // minEdistance("aske", "maska", 40, &mut Dmatrix, 0);
-
-    // printMatrix(&Dmatrix, 4+1, 5+1);
-    // println!("{}", Dmatrix[4][5]);
-
-    while let Some(line) = lines.next() {
-        
-        if line.len() == 0 {
+        else {
             break;
         }
 
-        minimalWords(line.trim(), &wordlist, &mut Dmatrix);
-
     }
+
+    // for word in wordList.iter() {
+    //     println!("{}", word);
+    // }
+
+    // process::exit(1);
+
+    // | --
+
+    // Initialize matrix
+
+    let mut dMatrix = [[99 as usize;MAXLENGTH+1];MAXLENGTH+1];
+
+    for i in 0..MAXLENGTH+1 {
+        dMatrix[i][0] = i;
+        dMatrix[0][i] = i;
+    }
+
+    // | --
+
+
+    // Do for each misspelled word
+    'outer: loop {
+
+        let mut misspelledWord = charVec::new();
+
+        loop {
+            if let Some(byte) = bytes.next() {
+                match byte {
+    
+                    b'\n' | b'\r' => {
+                        break;
+                    }
+                    0xc3 => misspelledWord.push(
+                            match bytes.next() {
+                                Some(0xa5) => 0x7b, // å => {
+                                Some(0xa4) => 0x7c, // ä => |
+                                Some(0xb6) => 0x7d, // ö => }
+                                _ => panic!("non-allowed character!")
+                            }
+                    ),
+                    b => misspelledWord.push(b),
+                }
+    
+            } else {
+                break 'outer;
+            }
+        }
+        if misspelledWord.len() == 0 {continue }
+
+        // println!("word: {:?}, {}", misspelledWord, misspelledWord.len());
+
+        // "Global" Assignments
+        let m = misspelledWord.len();
+        let mut minimumDistance = MAXLENGTH;
+        let mut oldtarget = charVec::new();
+        let mut closestWords: Vec<charVec> = Vec::with_capacity(100);
+
+        for target in wordList.iter() {
+            // "Local" Assignments
+            let n = target.len();
+            if (if m > n {m - n} else {n - m} > minimumDistance) {
+                continue
+            }
+        
+            let similarity = oldtarget.similar(target);
+
+            eDist(&misspelledWord, target, minimumDistance, &mut dMatrix, similarity);
+
+            let distance = dMatrix[m][n];
+
+            if distance < minimumDistance {
+                minimumDistance = distance;
+                closestWords.clear();
+                closestWords.push(*target);
+            }
+            else if distance == minimumDistance {
+                closestWords.push(*target);
+            }
+            oldtarget = *target;
+            
+        }
+
+        print!("{} ({}) ", misspelledWord, minimumDistance);
+        for word in closestWords {
+            print!("{} ", word);
+        }
+        println!();
+    }
+
+    // | --
 
     // println!("{:?}", nowTotal.elapsed().unwrap());
-
 }
 
-fn minimalWords(source: &str, wordlist: &Vec<&str>, Dmatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1]) {
+fn eDist(source: &charVec, target: &charVec, threshold: usize, Dmatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], offset: usize) {
 
-    let m = source.chars().count();
+    let m = source.len();
+    let n = target.len();
+    let absdiff = if m >= n {m - n} else {n - m};
 
-    let mut minimumDistance = MAXLENGTH;
-
-    let mut oldtarget = "";
-
-    let mut closestWords: Vec<&&str> = Vec::new(); 
-
-    for target in wordlist {
-
-        let n = target.chars().count();
-
-        if (m as isize - n as isize).abs() as usize > minimumDistance {
-            continue
-        }
-
-        let characterSimilarity: usize = similarity(target, oldtarget); 
-
-        minEdistance(source, target, minimumDistance, Dmatrix, characterSimilarity);
-
-        let distance = Dmatrix[m][n];
-
-        if distance < minimumDistance {
-            minimumDistance = distance;
-            closestWords.clear();
-            closestWords.push(target);
-        }
-        else if distance == minimumDistance {
-            closestWords.push(target);
-        }
-
-        oldtarget = target;
-    }
-
-    print!("{} ({}) ", source, minimumDistance);
-    for word in closestWords {
-        print!("{} ", word);
-    }
-    println!();
-
-}
-
-fn minEdistance(source: &str, target: &str, threshold: usize, Dmatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], offset: usize) {
-
-    let m = source.chars().count();
-    let n = target.chars().count();
-
-    let p = ((threshold as isize - (n as isize - m as isize).abs() ) as f32 * 0.5).floor() as isize + 1;
+    //let p = ((threshold as isize - absdiff as isize ) as f32 * 0.5).floor() as isize + 1;
 
     for i in 1..m+1 {
-
-        if n >= m {
-
-            let mut raisedfloor = i as isize - p;
-            let loweredroof = ((n - m) as isize + p + i as isize) as usize;
-
-            if raisedfloor < 0 { // Avoid underflows
-                raisedfloor = 0;
-            }
-
-            for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
+        for j in offset+1..n+1 {
 
                 let replace_cost;
 
-                if source.chars().nth(i - 1) == target.chars().nth(j - 1) {
+                if source.array[(i - 1)] == target.array[(j - 1)] {
                     replace_cost = 0;
                 } else {
                     replace_cost = 1;
@@ -132,57 +243,73 @@ fn minEdistance(source: &str, target: &str, threshold: usize, Dmatrix: &mut [[us
                 
                 Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
 
-            }
-
         }
-
-        else {
-
-            let mut raisedfloor = n as isize - m as isize - p + i as isize;
-            let loweredroof = (i as isize + p) as usize;
-
-            if raisedfloor < 0 { // Avoid underflows
-                raisedfloor = 0;
-            }
-
-
-            for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
-
-                let replace_cost;
-
-                if source.chars().nth(i - 1) == target.chars().nth(j - 1) {
-                    replace_cost = 0;
-                } else {
-                    replace_cost = 1;
-                }
-
-                let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
-
-                Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
-
-            }
-
-        }
-
     }
+
+    // for i in 1..m+1 {
+
+    //     if n >= m {
+
+    //         let mut raisedfloor = i as isize - p;
+    //         let loweredroof = ((n - m) as isize + p + i as isize) as usize;
+
+    //         if raisedfloor < 0 { // Avoid underflows
+    //             raisedfloor = 0;
+    //         }
+
+    //         for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
+
+    //             let replace_cost;
+
+    //             if source.chars().nth(i - 1) == target.chars().nth(j - 1) {
+    //                 replace_cost = 0;
+    //             } else {
+    //                 replace_cost = 1;
+    //             }
+
+    //             let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
+                
+    //             Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
+
+    //         }
+
+    //     }
+
+    //     else {
+
+    //         let mut raisedfloor = n as isize - m as isize - p + i as isize;
+    //         let loweredroof = (i as isize + p) as usize;
+
+    //         if raisedfloor < 0 { // Avoid underflows
+    //             raisedfloor = 0;
+    //         }
+
+
+    //         for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
+
+    //             let replace_cost;
+
+    //             if source.chars().nth(i - 1) == target.chars().nth(j - 1) {
+    //                 replace_cost = 0;
+    //             } else {
+    //                 replace_cost = 1;
+    //             }
+
+    //             let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
+
+    //             Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
+
+    //         }
+
+    //     }
+
+    // }
 
     // println!();
     // println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, p: {}", source, target, Dmatrix[m][n], offset, threshold, p);
     // printMatrix(&Dmatrix, m+1, n+1);
     // println!();
 
-}
-
-
-fn similarity(source: &str, target: &str) -> usize {
-
-    for (index,chars) in source.chars().zip(target.chars()).enumerate(){
-        //print!("chars: {:#?} ",chars);
-        if chars.0!=chars.1{
-            return index;
-        }
-    }
-    return cmp::min(source.chars().count(), target.chars().count())
 }
 
 fn printMatrix(matrix: &[[usize; MAXLENGTH+1]; MAXLENGTH+1], m: usize, n: usize) {
