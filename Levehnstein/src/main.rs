@@ -5,7 +5,8 @@ use std::time::{Duration, SystemTime};
 use std::process;
 use std::fmt;
 
-use cmp::min;
+use cmp::*;
+use process::exit;
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
@@ -20,6 +21,7 @@ struct charVec {
 }
 
 impl charVec {
+
     pub fn new() -> Self {
         Self {
             array: [0; 40],
@@ -80,7 +82,8 @@ impl fmt::Debug for charVec {
 
 fn main() {
 
-    // let nowTotal = SystemTime::now();
+    #[cfg(feature = "bench")]
+    let nowTotal = SystemTime::now();
     
     // Take input
 
@@ -173,7 +176,7 @@ fn main() {
                 break 'outer;
             }
         }
-        if misspelledWord.len() == 0 {continue }
+        //if misspelledWord.len() == 0 {continue }
 
         // println!("word: {:?}, {}", misspelledWord, misspelledWord.len());
 
@@ -192,7 +195,7 @@ fn main() {
         
             let similarity = oldtarget.similar(target);
 
-            eDist(&misspelledWord, target, minimumDistance, &mut dMatrix, similarity);
+            eDist(&misspelledWord, target, minimumDistance as isize, &mut dMatrix, similarity);
 
             let distance = dMatrix[m][n];
 
@@ -216,99 +219,78 @@ fn main() {
     }
 
     // | --
-
-    // println!("{:?}", nowTotal.elapsed().unwrap());
+    
+    #[cfg(feature = "bench")]
+    println!("{:?}", nowTotal.elapsed().unwrap());
 }
 
-fn eDist(source: &charVec, target: &charVec, threshold: usize, Dmatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], offset: usize) {
+fn eDist(source: &charVec, target: &charVec, mut k: isize, Dmatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], mut offset: usize) {
 
     let m = source.len();
     let n = target.len();
+
+    k = min(((m+n) as f32 * 0.5).ceil() as isize, k); 
+
     let absdiff = if m >= n {m - n} else {n - m};
 
-    //let p = ((threshold as isize - absdiff as isize ) as f32 * 0.5).floor() as isize + 1;
+    let p = ((k - absdiff as isize ) as f32 * 0.5).floor() as isize + 1;
 
-    for i in 1..m+1 {
-        for j in offset+1..n+1 {
+    #[cfg(not(feature = "diagonal"))] {
 
-                let replace_cost;
+        //println!("DEFAULT!!");
 
-                if source.array[(i - 1)] == target.array[(j - 1)] {
-                    replace_cost = 0;
-                } else {
-                    replace_cost = 1;
+        for i in 1..m+1 {
+            for j in offset+1..n+1 {
+    
+                    let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
+
+                    let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
+                    
+                    Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
+    
+            }
+        }
+
+    }
+
+    #[cfg(feature = "diagonal")] {
+
+        for i in 1..m+1 {
+
+            let raisedFloor = cmp::max( (i as isize - k), (offset as isize + 1) ) as usize;
+            let loweredCeil = cmp::min( (k+i as isize) , (n as isize) ) as usize;
+
+            #[cfg(feature = "debug_specific")] {
+                print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
+            }
+
+            for j in raisedFloor..loweredCeil+1 {
+
+                #[cfg(feature = "debug_specific")] {
+                    print!("j: {} ", j);
                 }
 
+                let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
                 let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
                 
                 Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
 
+            }
+            #[cfg(feature = "debug_specific")] {
+                println!();
+            }
+
+
         }
+
     }
 
-    // for i in 1..m+1 {
-
-    //     if n >= m {
-
-    //         let mut raisedfloor = i as isize - p;
-    //         let loweredroof = ((n - m) as isize + p + i as isize) as usize;
-
-    //         if raisedfloor < 0 { // Avoid underflows
-    //             raisedfloor = 0;
-    //         }
-
-    //         for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
-
-    //             let replace_cost;
-
-    //             if source.chars().nth(i - 1) == target.chars().nth(j - 1) {
-    //                 replace_cost = 0;
-    //             } else {
-    //                 replace_cost = 1;
-    //             }
-
-    //             let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
-                
-    //             Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
-
-    //         }
-
-    //     }
-
-    //     else {
-
-    //         let mut raisedfloor = n as isize - m as isize - p + i as isize;
-    //         let loweredroof = (i as isize + p) as usize;
-
-    //         if raisedfloor < 0 { // Avoid underflows
-    //             raisedfloor = 0;
-    //         }
-
-
-    //         for j in cmp::max(offset+1, raisedfloor as usize)..cmp::min(n+1, loweredroof) {
-
-    //             let replace_cost;
-
-    //             if source.chars().nth(i - 1) == target.chars().nth(j - 1) {
-    //                 replace_cost = 0;
-    //             } else {
-    //                 replace_cost = 1;
-    //             }
-
-    //             let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
-
-    //             Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
-
-    //         }
-
-    //     }
-
-    // }
-
-    // println!();
-    // println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, p: {}", source, target, Dmatrix[m][n], offset, threshold, p);
-    // printMatrix(&Dmatrix, m+1, n+1);
-    // println!();
+    #[cfg(feature = "debug")] {
+        println!();
+        println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, p: {}", source, target, Dmatrix[m][n], offset, k, p);
+        printMatrix(&Dmatrix, m+1, n+1);
+        println!();
+    }
 
 }
 
