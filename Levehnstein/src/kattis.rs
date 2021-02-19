@@ -231,16 +231,12 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, Dmatrix: &mut [[usize
     let m = source.len();
     let n = target.len();
 
-    k = min(((m+n) as f32 * 0.5).ceil() as isize, k); 
-
     let absdiff = if m >= n {m - n} else {n - m};
 
     for i in 1..m+1 {
 
         let raisedFloor = cmp::max( (i as isize - k), (offset as isize + 1) ) as usize;
         let loweredCeil = cmp::min( (k+i as isize) , (n as isize) ) as usize;
-
-        // if (raisedFloor != offset+1) | (loweredCeil != n) {panic!()}
 
         #[cfg(feature = "debug_specific")] {
             print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
@@ -264,7 +260,6 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, Dmatrix: &mut [[usize
 
 
     }
-
 
 }
 

@@ -228,9 +228,7 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, Dmatrix: &mut [[usize
 
     let m = source.len();
     let n = target.len();
-
-    k = min(((m+n) as f32 * 0.5).ceil() as isize, k); 
-
+    
     let absdiff = if m >= n {m - n} else {n - m};
 
     let p = ((k - absdiff as isize ) as f32 * 0.5).floor() as isize + 1;
@@ -254,33 +252,33 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, Dmatrix: &mut [[usize
     }
 
     #[cfg(feature = "diagonal")] {
-
+        
         for i in 1..m+1 {
 
             let raisedFloor = cmp::max( (i as isize - k), (offset as isize + 1) ) as usize;
             let loweredCeil = cmp::min( (k+i as isize) , (n as isize) ) as usize;
-
+    
             #[cfg(feature = "debug_specific")] {
                 print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
             }
-
-            for j in raisedFloor..loweredCeil+1 {
-
+    
+            for j in raisedFloor..=loweredCeil {
+    
                 #[cfg(feature = "debug_specific")] {
                     print!("j: {} ", j);
                 }
-
+    
                 let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
                 let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
                 
                 Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
-
+    
             }
             #[cfg(feature = "debug_specific")] {
                 println!();
             }
-
-
+    
+    
         }
 
     }

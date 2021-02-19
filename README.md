@@ -8,4 +8,4 @@ EDIT: No more, diagonals and offsets aren't compatible and offsets are way faste
 
 ## Apparently python is too slow :)
 
-![Kattis proof](https://i.imgur.com/azpML48.png)
+![Kattis proof](https://i.imgur.com/r93SIjz.png)
