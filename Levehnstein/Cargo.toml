@@ -10,9 +10,5 @@ edition = "2018"
 
 [features]
 bench = []
-diagonal = []
-filled = []
-diagonal_old = []
 debug = []
 debug_specific = ["debug"]
-default = ["filled"]

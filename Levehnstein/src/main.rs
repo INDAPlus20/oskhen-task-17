@@ -129,12 +129,6 @@ fn main() {
 
     }
 
-    // for word in wordList.iter() {
-    //     println!("{}", word);
-    // }
-
-    // process::exit(1);
-
     // | --
 
     // Initialize matrix
@@ -176,9 +170,6 @@ fn main() {
                 break 'outer;
             }
         }
-        //if misspelledWord.len() == 0 {continue }
-
-        // println!("word: {:?}, {}", misspelledWord, misspelledWord.len());
 
         // "Global" Assignments
         let m = misspelledWord.len();
@@ -187,11 +178,9 @@ fn main() {
         let mut closestWords: Vec<charVec> = Vec::with_capacity(100);
 
         for target in wordList.iter() {
-            // "Local" Assignments
+
             let n = target.len();
-            if (if m > n {m - n} else {n - m} > minimumDistance) {
-                continue
-            }
+            if (if m > n {m - n} else {n - m} > minimumDistance) { continue }
         
             let similarity = oldtarget.similar(target);
 
@@ -224,69 +213,44 @@ fn main() {
     println!("{:?}", nowTotal.elapsed().unwrap());
 }
 
-fn eDist(source: &charVec, target: &charVec, mut k: isize, Dmatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], mut offset: usize) {
+fn eDist(source: &charVec, target: &charVec, mut k: isize, dMatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], mut offset: usize) {
 
     let m = source.len();
     let n = target.len();
-    
-    let absdiff = if m >= n {m - n} else {n - m};
 
-    let p = ((k - absdiff as isize ) as f32 * 0.5).floor() as isize + 1;
+    for i in 1..m+1 {
 
-    #[cfg(not(feature = "diagonal"))] {
+        let raisedFloor = cmp::max( (i as isize - k), (offset as isize + 1) ) as usize;
+        let loweredCeil = cmp::min( (k+i as isize) , (n as isize) ) as usize;
 
-        //println!("DEFAULT!!");
-
-        for i in 1..m+1 {
-            for j in offset+1..n+1 {
-    
-                    let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
-
-                    let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
-                    
-                    Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
-    
-            }
+        #[cfg(feature = "debug_specific")] {
+            print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
         }
+
+        for j in raisedFloor..=loweredCeil {
+
+            #[cfg(feature = "debug_specific")] {
+                print!("j: {} ", j);
+            }
+
+            let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
+            let length_changing = cmp::min(dMatrix[i-1][j] + 1, dMatrix[i][j-1] + 1);
+            
+            dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
+
+        }
+        #[cfg(feature = "debug_specific")] {
+            println!();
+        }
+
 
     }
 
-    #[cfg(feature = "diagonal")] {
-        
-        for i in 1..m+1 {
-
-            let raisedFloor = cmp::max( (i as isize - k), (offset as isize + 1) ) as usize;
-            let loweredCeil = cmp::min( (k+i as isize) , (n as isize) ) as usize;
-    
-            #[cfg(feature = "debug_specific")] {
-                print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
-            }
-    
-            for j in raisedFloor..=loweredCeil {
-    
-                #[cfg(feature = "debug_specific")] {
-                    print!("j: {} ", j);
-                }
-    
-                let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
-                let length_changing = cmp::min(Dmatrix[i-1][j] + 1, Dmatrix[i][j-1] + 1);
-                
-                Dmatrix[i][j] = cmp::min(Dmatrix[i-1][j-1] + replace_cost, length_changing);
-    
-            }
-            #[cfg(feature = "debug_specific")] {
-                println!();
-            }
-    
-    
-        }
-
-    }
 
     #[cfg(feature = "debug")] {
         println!();
-        println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, p: {}", source, target, Dmatrix[m][n], offset, k, p);
-        printMatrix(&Dmatrix, m+1, n+1);
+        println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, p: {}", source, target, dMatrix[m][n], offset, k, p);
+        printMatrix(&dMatrix, m+1, n+1);
         println!();
     }
 
