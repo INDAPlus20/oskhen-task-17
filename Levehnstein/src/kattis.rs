@@ -137,20 +137,22 @@ fn main() {
 
     // | --
 
-    // Initialize matrix
 
-    let mut dMatrix = [[99 as usize;MAXLENGTH+1];MAXLENGTH+1];
-
-    for i in 0..MAXLENGTH+1 {
-        dMatrix[i][0] = i;
-        dMatrix[0][i] = i;
-    }
-
-    // | --
 
 
     // Do for each misspelled word
     'outer: loop {
+
+        // Initialize matrix
+
+        let mut dMatrix = [[99 as usize;MAXLENGTH+1];MAXLENGTH+1];
+
+        for i in 0..MAXLENGTH+1 {
+            dMatrix[i][0] = i;
+            dMatrix[0][i] = i;
+        }
+
+        // | -- 
 
         let mut misspelledWord = charVec::new();
 
