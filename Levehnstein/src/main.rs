@@ -217,11 +217,16 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, dMatrix: &mut [[usize
 
     let m = source.len();
     let n = target.len();
+    let mut upperBound = k;
+    let mut lowerBound = k;
+
+    #[cfg(feature = "debug")]
+    let mut ifcount = 0;
 
     for i in 1..m+1 {
 
-        let raisedFloor = cmp::max( (i as isize - k), (offset as isize + 1) ) as usize;
-        let loweredCeil = cmp::min( (k+i as isize) , (n as isize) ) as usize;
+        let raisedFloor = cmp::max( (i as isize - lowerBound), (offset as isize + 1) ) as usize;
+        let loweredCeil = cmp::min( (i as isize + upperBound) , (n as isize) ) as usize;
 
         #[cfg(feature = "debug_specific")] {
             print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
@@ -238,6 +243,23 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, dMatrix: &mut [[usize
             
             dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
 
+            if dMatrix[i][j] as isize > k {
+                break;
+            }
+
+            #[cfg(feature = "mark_diagonal")] {
+
+                if dMatrix[i][j] as isize > k {
+
+                    #[cfg(feature = "debug")]{
+                        ifcount += 1;
+                    }
+    
+                    if j as isize - i as isize == lowerBound as isize + 1 {lowerBound += 1} else if j as isize - i as isize == loweredCeil as isize - 1 {upperBound += 1}
+                }
+
+            }
+
         }
         #[cfg(feature = "debug_specific")] {
             println!();
@@ -249,7 +271,7 @@ fn eDist(source: &charVec, target: &charVec, mut k: isize, dMatrix: &mut [[usize
 
     #[cfg(feature = "debug")] {
         println!();
-        println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, p: {}", source, target, dMatrix[m][n], offset, k, p);
+        println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, ifcount: {}", source, target, dMatrix[m][n], offset, k, ifcount);
         printMatrix(&dMatrix, m+1, n+1);
         println!();
     }

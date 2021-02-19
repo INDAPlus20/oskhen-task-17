@@ -12,3 +12,4 @@ edition = "2018"
 bench = []
 debug = []
 debug_specific = ["debug"]
+mark_diagonal = []
