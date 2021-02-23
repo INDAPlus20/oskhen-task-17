@@ -1,12 +1,5 @@
-use std::{cmp, fmt::Display};
-use std::io::prelude::*;
-use std::convert;
-use std::time::{Duration, SystemTime};
-use std::process;
-use std::fmt;
+use std::{io::prelude::*, convert, time::SystemTime, collections::BinaryHeap, cmp, fmt, char::MAX, process::exit};
 
-use cmp::*;
-use process::exit;
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]
@@ -19,6 +12,30 @@ struct charVec {
     array: [u8; 40],
     len: usize
 }
+// #[derive(Copy, Clone, Eq, PartialEq)]
+// struct Node {
+//     i: usize,
+//     j: usize,
+//     weight: usize,
+// }
+
+// impl Ord for Node {
+//     fn cmp(&self, other: &Self) -> cmp::Ordering {
+//         // Notice that the we flip the ordering on costs.
+//         // In case of a tie we compare positions - this step is necessary
+//         // to make implementations of `PartialEq` and `Ord` consistent.
+//         other.weight.cmp(&self.weight)
+//             .then_with(|| self.i.cmp(&other.i)).then_with(|| self.j.cmp(&other.j))
+//     }
+// }
+
+// // `PartialOrd` needs to be implemented as well .
+// impl PartialOrd for Node {
+//     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+//         Some(self.cmp(other))
+//     }
+// }
+
 
 impl charVec {
 
@@ -41,7 +58,7 @@ impl charVec {
         self.len = 0;
     }
     pub fn similar(&self, other: &charVec) -> usize {
-        let minlen = min(self.len(), other.len());
+        let minlen = cmp::min(self.len(), other.len());
         for i in 0..minlen {
             if self.array[i] != other.array[i] {
                 return i;
@@ -184,7 +201,7 @@ fn main() {
         
             let similarity = oldtarget.similar(target);
 
-            eDist(&misspelledWord, target, minimumDistance as isize, &mut dMatrix, similarity);
+            eDist(&misspelledWord, target, minimumDistance, &mut dMatrix, similarity);
 
             let distance = dMatrix[m][n];
 
@@ -213,68 +230,97 @@ fn main() {
     println!("{:?}", nowTotal.elapsed().unwrap());
 }
 
-fn eDist(source: &charVec, target: &charVec, mut k: isize, dMatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], mut offset: usize) {
+fn eDist(source: &charVec, target: &charVec, mut k: usize, dMatrix: &mut [[usize; MAXLENGTH+1]; MAXLENGTH+1], mut offset: usize) {
 
     let m = source.len();
     let n = target.len();
-    let mut upperBound = k;
-    let mut lowerBound = k;
 
-    #[cfg(feature = "debug")]
-    let mut ifcount = 0;
+    if k < cmp::min(m, n) {
 
-    for i in 1..m+1 {
+        let P1y = cmp::max(0, offset as isize - k as isize) as usize;
+        let P2y = n-k;
+        let P3y = cmp::max(offset+k, P2y);
 
-        let raisedFloor = cmp::max( (i as isize - lowerBound), (offset as isize + 1) ) as usize;
-        let loweredCeil = cmp::min( (i as isize + upperBound) , (n as isize) ) as usize;
-
-        #[cfg(feature = "debug_specific")] {
-            print!("for i: {}, ceil: {}, floor {}", i, loweredCeil, raisedFloor);
-        }
-
-        for j in raisedFloor..=loweredCeil {
-
-            #[cfg(feature = "debug_specific")] {
-                print!("j: {} ", j);
-            }
-
-            let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
-            let length_changing = cmp::min(dMatrix[i-1][j] + 1, dMatrix[i][j-1] + 1);
-            
-            dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
-
-            if dMatrix[i][j] as isize > k {
-                break;
-            }
-
-            #[cfg(feature = "mark_diagonal")] {
-
-                if dMatrix[i][j] as isize > k {
-
-                    #[cfg(feature = "debug")]{
-                        ifcount += 1;
-                    }
+        #[cfg(feature = "debug_specific")]
+        println!("P1y: {}, P2y: {}, P3y: {}, k: {}, offset: {}, m: {}, n: {}", P1y, P2y, P3y, k, offset, m, n);
     
-                    if j as isize - i as isize == lowerBound as isize + 1 {lowerBound += 1} else if j as isize - i as isize == loweredCeil as isize - 1 {upperBound += 1}
-                }
+        for i in P1y+1..=P2y {
+    
+            for j in offset+1..=i+k {
+
+                #[cfg(feature = "debug_specific")]
+                println!("L1: {} : {}", i, j);
+
+                let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
+                let length_changing = cmp::min(dMatrix[i-1][j] + 1, dMatrix[i][j-1] + 1);
+                
+                dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
+    
+            }
+    
+        }
+        
+        for i in P2y+1..=P3y {
+
+            for j in offset+1..=n {
+
+                #[cfg(feature = "debug_specific")]
+                println!("L2: {} : {}", i, j);
+
+                let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
+                let length_changing = cmp::min(dMatrix[i-1][j] + 1, dMatrix[i][j-1] + 1);
+                
+                dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
 
             }
 
         }
-        #[cfg(feature = "debug_specific")] {
-            println!();
+
+        for i in P3y+1..=m {
+
+            for j in i-k..=n {
+                
+                #[cfg(feature = "debug_specific")]
+                println!("L3: {} : {}", i, j);
+
+                let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
+                let length_changing = cmp::min(dMatrix[i-1][j] + 1, dMatrix[i][j-1] + 1);
+                
+                dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
+
+            }
         }
 
 
-    }
 
 
-    #[cfg(feature = "debug")] {
-        println!();
-        println!("source: {}, target: {}, distance: {}, offset: {}, threshold: {}, ifcount: {}", source, target, dMatrix[m][n], offset, k, ifcount);
-        printMatrix(&dMatrix, m+1, n+1);
-        println!();
+
+
+
+
     }
+    else {
+
+        for i in 1..m+1 {
+
+            let raisedFloor = cmp::max( (i as isize - k as isize), (offset as isize + 1) ) as usize;
+            let loweredCeil = cmp::min( (i as isize + k as isize) , (n as isize) ) as usize;
+
+            for j in raisedFloor..=loweredCeil {
+
+                let replace_cost = (source.array[(i - 1)] != target.array[(j - 1)]) as usize;
+                let length_changing = cmp::min(dMatrix[i-1][j] + 1, dMatrix[i][j-1] + 1);
+
+                dMatrix[i][j] = cmp::min(dMatrix[i-1][j-1] + replace_cost, length_changing);
+            }
+
+        }
+
+    }
+    #[cfg(feature = "debug_specific")]
+    println!("{} -> {}: {}", source, target, dMatrix[m][n]);
+    #[cfg(feature = "debug_specific")]
+    printMatrix(dMatrix, m+1, n+1);
 
 }
 
